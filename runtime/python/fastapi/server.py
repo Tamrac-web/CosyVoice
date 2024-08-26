@@ -28,7 +28,7 @@ class LaunchFailed(Exception):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    model_dir = os.getenv("MODEL_DIR", "/root/codespaces/CosyVoice/pretrained_models/CosyVoice-300M")
+    model_dir = os.getenv("MODEL_DIR", "/root/codespaces/gkzj/cosyvoice/pretrained_models/CosyVoice-300M")
     if model_dir:
         logging.info("MODEL_DIR is {}", model_dir)
         app.cosyvoice = CosyVoice(model_dir)
