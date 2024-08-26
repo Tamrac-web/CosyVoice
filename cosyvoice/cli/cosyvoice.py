@@ -51,6 +51,10 @@ class CosyVoice:
             model_output = self.model.inference(**model_input)
             tts_speeches.append(model_output['tts_speech'])
         return {'tts_speech': torch.concat(tts_speeches, dim=1)}
+    
+    def inference_voice(self,prompt_speech_16k,voice_name):
+        self.frontend.frontend_save_tone(prompt_speech_16k,self.model_dir,voice_name)
+        return
 
     def inference_zero_shot(self, tts_text, prompt_text, prompt_speech_16k):
         prompt_text = self.frontend.text_normalize(prompt_text, split=False)

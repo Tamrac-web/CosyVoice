@@ -28,7 +28,7 @@ class LaunchFailed(Exception):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    model_dir = os.getenv("MODEL_DIR", "pretrained_models/CosyVoice-300M-SFT")
+    model_dir = os.getenv("MODEL_DIR", "/root/codespaces/CosyVoice/pretrained_models/CosyVoice-300M")
     if model_dir:
         logging.info("MODEL_DIR is {}", model_dir)
         app.cosyvoice = CosyVoice(model_dir)
@@ -63,6 +63,23 @@ async def sft(tts: str = Form(), role: str = Form()):
     end = time.process_time()
     logging.info("infer time is {} seconds", end-start)
     return buildResponse(output['tts_speech'])
+
+@app.post("/api/inference/voice")
+async def inferenceVoice(voice_name: str = Form(), audio: UploadFile = File()):
+    start = time.process_time()
+    prompt_speech = load_wav(audio.file, 16000)
+    prompt_audio = (prompt_speech.numpy() * (2**15)).astype(np.int16).tobytes()
+    prompt_speech_16k = torch.from_numpy(np.array(np.frombuffer(prompt_audio, dtype=np.int16))).unsqueeze(dim=0)
+    prompt_speech_16k = prompt_speech_16k.float() / (2**15)
+
+    app.cosyvoice.inference_voice(prompt_speech_16k,voice_name)
+
+    end = time.process_time()
+    logging.info("infer time is {} seconds", end-start)
+    logging.info("推理音色{}完成",voice_name)
+    # 构建json结果 200结果
+
+    return {"status": "success", "voice_name": voice_name, "processing_time": end - start}
 
 @app.post("/api/inference/zero-shot")
 async def zeroShot(tts: str = Form(), prompt: str = Form(), audio: UploadFile = File()):

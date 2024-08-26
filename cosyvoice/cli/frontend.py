@@ -133,6 +133,25 @@ class CosyVoiceFrontEnd:
         embedding = self.spk2info[spk_id]['embedding']
         model_input = {'text': tts_text_token, 'text_len': tts_text_token_len, 'llm_embedding': embedding, 'flow_embedding': embedding}
         return model_input
+    
+    # 推理音色并保存到spk2info.pt
+    def frontend_inference_voice(self,prompt_speech_16k,pretrained_model_dir,voice_name):
+        prompt_speech_22050 = torchaudio.transforms.Resample(orig_freq=16000, new_freq=22050)(prompt_speech_16k)
+        speech_feat, speech_feat_len = self._extract_speech_feat(prompt_speech_22050)
+        speech_token, speech_token_len = self._extract_speech_token(prompt_speech_16k)
+        embedding = self._extract_spk_embedding(prompt_speech_16k)
+        voice_tone = {
+             'speech_token': speech_token,
+             'speech_feat': speech_feat,
+             'embedding': embedding
+        }
+        spk2info_path = os.path.join(pretrained_model_dir, 'spk2info.pt')
+        spk2info = torch.load(spk2info_path)
+        spk2info[voice_name]  = voice_tone
+        torch.save(spk2info, spk2info_path)
+        return
+    
+
 
     def frontend_zero_shot(self, tts_text, prompt_text, prompt_speech_16k):
         tts_text_token, tts_text_token_len = self._extract_text_token(tts_text)
